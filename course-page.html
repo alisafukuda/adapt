@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important}img{max-width:100%}</style>
+<title>Assumption X-ray</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: dark presenter bar above a fictional course home page ("Quad"). X-ray dims everything except four outlined parts, each with one yellow tag; a click on a tag adapts that part, a second click undoes it. */
+:root{
+  color-scheme: light;
+  --bg:#F4F6F8; --surface:#FFFFFF; --ink:#1B2230; --body-ink:#3C4656; --meta:#A7AFBB; --line:#E1E5EA;
+  --gnav:#1C2333; --gnav-ink:#C9D1DE; --brand:#2F6F5E; --brand-soft:#E4F0EC; --link:#235E9E;
+  --frame:#0D1117; --frame-ink:#E7EBF1; --frame-muted:#8A93A3;
+  --xr:#FFD60A; --xr-ink:#111111; --ok:#22C46F; --ok-ink:#06210F;
+  --display:"Space Grotesk","Segoe UI",system-ui,sans-serif;
+  --body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --ts:1; --gnav-w:72px;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.45;margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--frame)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--xr);outline-offset:2px}
+
+/* ---------- presenter bar ---------- */
+.frame{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:var(--frame);color:var(--frame-ink)}
+.frame-in{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.proto{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--frame-muted)}
+.proto b{color:var(--frame-ink);font-weight:600}
+.hint{font-size:13px;flex:1 1 260px;min-width:0;color:var(--frame-ink)}
+.xtoggle{display:inline-flex;align-items:center;gap:8px;background:transparent;border:1.5px solid var(--xr);color:var(--xr);font-family:var(--mono);font-weight:600;font-size:13px;letter-spacing:.08em;text-transform:uppercase;padding:8px 14px;border-radius:6px;cursor:pointer}
+.xtoggle[aria-pressed="true"]{background:var(--xr);color:var(--xr-ink)}
+.xtoggle kbd{font-family:var(--mono);font-size:10px;border:1px solid currentColor;border-radius:3px;padding:0 4px;opacity:.75}
+.ghost{background:transparent;border:0;color:var(--frame-muted);font-size:12px;text-decoration:underline;cursor:pointer;padding:4px}
+
+/* ---------- course shell ---------- */
+.app{display:grid;grid-template-columns:var(--gnav-w) minmax(0,1fr);min-height:calc(100vh - 56px)}
+.labels{--gnav-w:168px}
+.gnav{background:var(--gnav);color:var(--gnav-ink);padding:10px 0;display:flex;flex-direction:column;gap:2px}
+.gitem{display:flex;align-items:center;gap:12px;padding:10px 0 10px 24px;font-size:13px;font-weight:500;color:inherit;border:0;border-left:3px solid transparent;background:none;width:100%;text-align:left;cursor:default}
+.gitem svg{width:24px;height:24px;flex:none}
+.gitem .gl{display:none;white-space:nowrap}
+.labels .gitem .gl{display:inline}
+.gitem.on{border-left-color:#fff;color:#fff;background:rgba(255,255,255,.06)}
+.logo-mark{width:26px;height:26px;border-radius:6px;background:var(--brand);display:grid;place-items:center;font-family:var(--display);font-weight:700;color:#fff;font-size:15px}
+.badge{position:relative;display:block}
+.badge::after{content:"3";position:absolute;top:-5px;right:-7px;background:#E5484D;color:#fff;font-size:9.5px;font-weight:700;border-radius:8px;padding:0 4px;line-height:14px}
+
+.course{min-width:0;font-size:calc(14px*var(--ts));color:var(--body-ink)}
+.ctop{display:flex;align-items:center;gap:10px;background:var(--surface);border-bottom:1px solid var(--line);padding-block:12px;padding-left:24px;padding-right:max(16px,env(safe-area-inset-right,0px))}
+.ctop svg{width:20px;height:20px;color:var(--meta)}
+.ctop a{color:var(--link);text-decoration:none}
+.ctop .sep{color:var(--meta)}
+.cbody{display:grid;grid-template-columns:140px minmax(0,1fr) 250px;gap:28px;padding-block:24px 64px;padding-left:24px;padding-right:max(16px,env(safe-area-inset-right,0px))}
+.cnav{display:flex;flex-direction:column;gap:2px}
+.cnav span{padding:6px 10px;border-left:3px solid transparent;color:var(--link)}
+.cnav span.on{border-left-color:var(--ink);color:var(--ink);font-weight:600}
+.cmain,.cside{min-width:0;display:grid;gap:22px;align-content:start}
+@media (max-width:1050px){.cbody{grid-template-columns:140px minmax(0,1fr)}.cside{grid-column:2}}
+@media (max-width:720px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .gnav{flex-direction:row;flex-wrap:wrap;padding:4px 8px}
+  .gitem{width:auto;padding:8px 10px;border-left:0}
+  .cbody{grid-template-columns:minmax(0,1fr);padding-left:max(16px,env(safe-area-inset-left,0px))}
+  .ctop{padding-left:max(16px,env(safe-area-inset-left,0px))}
+  .cside{grid-column:auto}
+  .cnav{flex-direction:row;flex-wrap:wrap}
+}
+h1{font-family:var(--display);font-size:calc(26px*var(--ts));color:var(--ink);margin:0;line-height:1.15;text-wrap:balance}
+h2{font-size:calc(16px*var(--ts));color:var(--ink);margin:0 0 10px}
+.sub{color:var(--meta);font-size:calc(12px*var(--ts));margin-top:4px}
+.meta{color:var(--meta);font-size:calc(11px*var(--ts))}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px}
+
+.ann .who{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.avatar{width:32px;height:32px;border-radius:50%;background:#D7E3F4;color:#2B4C7E;display:grid;place-items:center;font-weight:700;font-size:12px;flex:none}
+.ann p{margin:0;max-width:70ch}
+.keypts{display:none;background:var(--brand-soft);border-radius:6px;padding:10px 12px 10px 30px;margin:0 0 12px;color:var(--ink)}
+.keypts li+li{margin-top:3px}
+.points .keypts{display:block}
+
+.mods{display:grid;gap:10px}
+.week{border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.whead{display:flex;align-items:center;gap:8px;width:100%;background:#F2F4F7;border:0;border-bottom:1px solid var(--line);padding:9px 12px;font-weight:600;color:var(--ink);text-align:left;cursor:pointer;font-size:calc(14px*var(--ts));border-radius:6px 6px 0 0}
+.whead svg{width:14px;height:14px;flex:none;transition:transform .15s}
+.week.closed .whead{border-bottom:0;border-radius:6px}
+.week.closed .whead svg{transform:rotate(-90deg)}
+.week.closed .witems{display:none}
+.week.now{border-color:var(--brand)}
+.week.now .whead{background:var(--brand-soft)}
+.nowtag{font-size:11px;font-weight:600;color:var(--brand);margin-left:auto}
+.witems{list-style:none;margin:0;padding:0}
+.witems li{display:flex;align-items:center;gap:10px;padding:7px 12px;border-top:1px solid #F0F2F5}
+.witems li:first-child{border-top:0}
+.witems .ic{width:16px;height:16px;color:var(--meta);flex:none}
+.witems .txt{min-width:0;flex:1;color:var(--link);font-size:calc(13.5px*var(--ts))}
+
+.todo h2{font-size:calc(13px*var(--ts));text-transform:uppercase;letter-spacing:.06em;color:var(--meta);font-weight:600}
+.todo ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.todo li{display:grid;gap:1px}
+.todo .t{color:var(--link);font-size:calc(12px*var(--ts))}
+
+/* ---------- X-ray ---------- */
+.plain{transition:opacity .2s}
+body.xray .plain{opacity:.3}
+.assume{position:relative}
+body.xray .assume{outline:3px dashed var(--xr);outline-offset:5px;border-radius:8px}
+body.xray .assume.done{outline:3px solid var(--ok)}
+body.xray .cbody{padding-top:72px}
+body.xray .cmain,body.xray .cside{gap:72px}
+.xtag{display:none;position:absolute;left:0;top:-10px;transform:translateY(-100%);z-index:30;width:max-content;max-width:min(320px,calc(100vw - 32px))}
+body.xray .xtag{display:block}
+.assume[data-pos="right"]>.xtag{left:calc(100% + 12px);top:430px;transform:none;max-width:158px}
+body.xray .gnav.assume{outline-offset:-4px;border-radius:0}
+.assume[data-pos="end"]>.xtag{left:auto;right:0}
+@media (max-width:720px){.assume[data-pos="right"]>.xtag{left:0;top:calc(100% + 10px);max-width:min(320px,calc(100vw - 32px))}body.xray .cbody{padding-top:110px}}
+.xbtn{display:grid;gap:2px;background:var(--xr);color:var(--xr-ink);border:0;border-radius:6px;padding:8px 12px;font-family:var(--body);font-size:13.5px;font-weight:600;line-height:1.3;cursor:pointer;text-align:left;box-shadow:0 3px 0 rgba(0,0,0,.28)}
+.xbtn b{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em}
+.xbtn small{font-family:var(--mono);font-size:11px;font-weight:500;opacity:.7}
+.done>.xtag .xbtn{background:var(--ok);color:var(--ok-ink)}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+
+<div class="frame">
+  <div class="frame-in">
+    <div class="proto"><b>ADAPT</b> · prototype</div>
+    <div class="hint" id="hint"></div>
+    <button class="xtoggle" id="xray" aria-pressed="false">X-ray <kbd>X</kbd></button>
+    <button class="ghost" id="reset">Reset</button>
+  </div>
+</div>
+
+<div class="app" id="app">
+  <nav class="gnav assume" data-key="nav" data-pos="right" aria-label="Global">
+    <div class="xtag"></div>
+    <div class="gitem"><span class="logo-mark">Q</span><span class="gl" style="font-family:var(--display);font-weight:700;color:#fff;font-size:17px">Quad</span></div>
+    <span class="gitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span class="gl">Account</span></span>
+    <span class="gitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 15a8 8 0 1116 0"/><path d="M12 15l4-5"/></svg><span class="gl">Dashboard</span></span>
+    <span class="gitem on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h6a2 2 0 012 2v12a2 2 0 00-2-2H4zM20 5h-6a2 2 0 00-2 2v12a2 2 0 012-2h6z"/></svg><span class="gl">Courses</span></span>
+    <span class="gitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg><span class="gl">Calendar</span></span>
+    <span class="gitem"><span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="display:block"><path d="M4 13l2.5-7h11L20 13v6H4z"/><path d="M4 13h5l1 2h4l1-2h5"/></svg></span><span class="gl">Inbox</span></span>
+    <span class="gitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12a8 8 0 102.3-5.6L4 9"/><path d="M4 4v5h5M12 8v4l3 2"/></svg><span class="gl">History</span></span>
+    <span class="gitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-1 .7-1.5 1.2-1.5 2.5M12 17h.01"/></svg><span class="gl">Help</span></span>
+  </nav>
+
+  <div class="course">
+    <div class="ctop plain">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      <a>ENG 210</a><span class="sep">›</span><span>Home</span>
+    </div>
+    <div class="cbody">
+      <div class="cnav plain">
+        <span class="on">Home</span><span>Announcements</span><span>Modules</span><span>Assignments</span><span>Grades</span><span>People</span>
+      </div>
+
+      <div class="cmain">
+        <div class="plain"><h1>ENG 210 · Writing About Place</h1><div class="sub">Fall 2026 · Prof. Dana Okafor</div></div>
+
+        <section class="panel ann assume" data-key="ann" id="ann">
+          <div class="xtag"></div>
+          <div class="who"><span class="avatar">DO</span><div><b style="color:var(--ink)">Updates before the long weekend</b><div class="meta">Dana Okafor · Posted Nov 9, 2026, 4:12 PM</div></div></div>
+          <ul class="keypts">
+            <li><b>Reading Response 11</b> is due Thu, Nov 12, 11:59 PM</li>
+            <li>Upload a <b>PDF</b>, not a Google Doc link</li>
+            <li>Late work loses <b>10% per day</b></li>
+            <li>Office hours this week: <b>Wed 2–3 PM, Hall B, Room 318</b></li>
+          </ul>
+          <p>Hi all, a few updates before the long weekend. Since several of you asked, Reading Response 11 is still due this Thursday (Nov 12) by 11:59 PM, but please upload it as a PDF this time rather than a Google Doc link because the grader can't open shared links from outside our domain, and anything submitted late will lose 10% per day as stated in the syllabus. Also, my Wednesday office hours are moving from 3–4 PM to 2–3 PM and will be in Hall B, Room 318 instead of the usual room, at least for this week. Finally, the reading for Week 12 is now posted in Modules. Enjoy the weekend! Dana</p>
+        </section>
+
+        <section class="assume" data-key="mods">
+          <div class="xtag"></div>
+          <h2>Modules</h2>
+          <div class="mods" id="mods"></div>
+        </section>
+      </div>
+
+      <div class="cside">
+        <section class="panel todo assume" data-key="text" data-pos="end">
+          <div class="xtag"></div>
+          <h2>To do</h2>
+          <ul>
+            <li><span class="t">Reading Response 11</span><span class="meta">10 points · Nov 12 at 11:59pm</span></li>
+            <li><span class="t">Discussion: Writing a neighborhood</span><span class="meta">5 points · Nov 14 at 11:59pm</span></li>
+            <li><span class="t">Quiz 4</span><span class="meta">15 points · Nov 20 at 11:59pm</span></li>
+          </ul>
+        </section>
+        <section class="panel plain"><h2 style="font-size:calc(13px*var(--ts))">Recent feedback</h2><div class="meta">Reading Response 10 · 9/10 · "Strong opening detail."</div></section>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(()=>{
+const $=s=>document.querySelector(s);
+const INFO={
+  nav:{a:'you know what each icon means',d:'icons show their names'},
+  text:{a:'you can read small, light-gray text',d:'text is larger and darker'},
+  ann:{a:'you can pull key details out of a long paragraph',d:'key points listed first'},
+  mods:{a:'you can scan 58 items to find this week',d:'this week first, the rest folded'}
+};
+let A={nav:false,text:false,ann:false,mods:false},xray=false,flipped=new Set();
+
+/* modules data */
+const THEMES=['Where are you from','Maps we carry','Description and detail','The block','Listening to a place','Sound and setting','Interviews','Archives','Change over time','Draft workshop','Writing a neighborhood','Revision'];
+const READS=['Solnit, "Field Guide" ch. 1','Lynch, "The Image of the City" ch. 1','Didion, "Goodbye to All That"','Jacobs, "Death and Life" ch. 2','Schafer, "The Soundscape" excerpt','Field recording notes','Terkel, "Working" selections','Hartman, "Venus in Two Acts"','Cronon, "Kennecott Journey"','Peer draft packet','Baldwin, "Fifth Avenue, Uptown"','Lamott, "Bird by Bird" excerpt'];
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const day=(w,o)=>{const d=new Date(2026,7,31+7*(w-1)+o);return MON[d.getMonth()]+' '+d.getDate()};
+const NOW=11;
+const WEEKS=THEMES.map((t,i)=>{
+  const w=i+1,it=[['read','Reading: '+READS[i],''],['file',`Week ${w} lecture slides`,''],['disc','Discussion: '+t,day(w,5)+' | 5 pts'],['asg','Reading Response '+w,day(w,3)+' | 10 pts']];
+  if(w%3===0)it.push(['quiz','Quiz '+w/3,day(w,4)+' | 15 pts']);
+  if(w===6||w===10)it.push(['file',w===6?'Midterm reflection guidelines':'Workshop sign-up sheet','']);
+  return{w,title:`Week ${w}: ${t}`,items:it};
+});
+const ICON={read:'<path d="M5 4h10l4 4v12H5z"/><path d="M15 4v4h4"/>',file:'<rect x="4" y="5" width="16" height="12" rx="1"/><path d="M8 21h8M12 17v4"/>',disc:'<path d="M4 5h16v10H9l-5 4z"/>',asg:'<path d="M6 3h9l4 4v14H6z"/><path d="M9 12h6M9 16h6"/>',quiz:'<circle cx="12" cy="12" r="8.5"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-1 .7-1.5 1.2-1.5 2.5M12 17h.01"/>'};
+
+function renderMods(){
+  const order=A.mods?[WEEKS[NOW-1],...WEEKS.filter(w=>w.w!==NOW)]:WEEKS;
+  $('#mods').innerHTML=order.map(w=>{
+    const closedByDefault=A.mods&&w.w!==NOW;
+    const closed=flipped.has(w.w)?!closedByDefault:closedByDefault;
+    const now=A.mods&&w.w===NOW;
+    return `<div class="week${closed?' closed':''}${now?' now':''}"><button class="whead" data-week="${w.w}" aria-expanded="${!closed}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>${w.title}${now?'<span class="nowtag">This week</span>':''}</button>
+    <ul class="witems">${w.items.map(([k,t,m])=>`<li><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">${ICON[k]}</svg><div class="txt">${t}${m?`<div class="meta">${m}</div>`:''}</div></li>`).join('')}</ul></div>`;
+  }).join('');
+}
+
+function render(){
+  $('#app').classList.toggle('labels',A.nav);
+  const r=document.documentElement.style;
+  r.setProperty('--ts',A.text?1.2:1);
+  r.setProperty('--meta',A.text?'#3F4857':'#A7AFBB');
+  r.setProperty('--body-ink',A.text?'#1B2230':'#3C4656');
+  $('#ann').classList.toggle('points',A.ann);
+  renderMods();
+  document.querySelectorAll('.assume').forEach(box=>{
+    const k=box.dataset.key,on=A[k];
+    box.classList.toggle('done',on);
+    box.querySelector(':scope > .xtag').innerHTML=`<button class="xbtn" data-k="${k}" aria-pressed="${on}"><b>${on?'ADAPTED':'ASSUMES'}</b><span>${on?INFO[k].d:INFO[k].a}</span><small>${on?'Click to undo':'Click to adapt'}</small></button>`;
+  });
+  const n=Object.values(A).filter(Boolean).length;
+  $('#hint').textContent=xray
+    ?(n===4?'All 4 assumptions adapted. Turn X-ray off to see the page as it is now.':`Click a yellow tag to adapt that part of the page. ${n} of 4 adapted.`)
+    :'A course home page. Turn on X-ray to see what it assumes about you.';
+}
+
+function setXray(on){xray=on;document.body.classList.toggle('xray',on);$('#xray').setAttribute('aria-pressed',on);render()}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-k]');
+  if(t){const k=t.dataset.k;A[k]=!A[k];if(k==='mods')flipped.clear();render();return}
+  const w=e.target.closest('[data-week]');
+  if(w){const n=+w.dataset.week;flipped.has(n)?flipped.delete(n):flipped.add(n);renderMods()}
+});
+$('#xray').addEventListener('click',()=>setXray(!xray));
+document.addEventListener('keydown',e=>{if((e.key==='x'||e.key==='X')&&!e.metaKey&&!e.ctrlKey&&!e.altKey&&!e.target.closest('input,textarea'))setXray(!xray)});
+$('#reset').addEventListener('click',()=>{A={nav:false,text:false,ann:false,mods:false};flipped.clear();setXray(false)});
+render();
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important}img{max-width:100%}</style>
+<title>Box Office X-ray</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: dark presenter bar, then a desktop browser window showing a fictional venue's checkout page. X-ray dims everything except four outlined parts, each with one tag above it; a click adapts, a second click undoes. */
+:root{
+  color-scheme: light;
+  --bg:#DDE1E7; --chrome:#ECEEF2; --surface:#FFFFFF; --ink:#18151F; --soft:#5E5A6B; --faint:#A39FAE; --line:#E5E3EA;
+  --brand:#4B3A8C; --brand-soft:#ECE8F7; --night:#1C1530; --night-ink:#D9D2F0;
+  --seat:#4B3A8C; --taken:#D4D1DB; --ada:#1F6FB2; --sel:#E0812B;
+  --frame:#0D1117; --frame-ink:#E7EBF1; --frame-muted:#8A93A3;
+  --xr:#FFD60A; --xr-ink:#111111; --ok:#22C46F; --ok-ink:#06210F; --warn:#C2362B;
+  --display:"Space Grotesk","Segoe UI",system-ui,sans-serif;
+  --body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --seat-size:8px;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.45;margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--frame)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--xr);outline-offset:2px}
+
+/* presenter bar */
+.frame{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:var(--frame);color:var(--frame-ink)}
+.frame-in{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.proto{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--frame-muted)}
+.proto b{color:var(--frame-ink);font-weight:600}
+.hint{font-size:13px;flex:1 1 260px;min-width:0}
+.xtoggle{display:inline-flex;align-items:center;gap:8px;background:transparent;border:1.5px solid var(--xr);color:var(--xr);font-family:var(--mono);font-weight:600;font-size:13px;letter-spacing:.08em;text-transform:uppercase;padding:8px 14px;border-radius:6px;cursor:pointer}
+.xtoggle[aria-pressed="true"]{background:var(--xr);color:var(--xr-ink)}
+.xtoggle kbd{font-family:var(--mono);font-size:10px;border:1px solid currentColor;border-radius:3px;padding:0 4px;opacity:.75}
+.ghost{background:transparent;border:0;color:var(--frame-muted);font-size:12px;text-decoration:underline;cursor:pointer;padding:4px}
+
+/* browser window */
+.stage{padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.win{max-width:1180px;margin:0 auto;background:var(--surface);border-radius:10px;overflow:hidden;box-shadow:0 24px 60px rgba(20,16,40,.22)}
+.wbar{display:flex;align-items:center;gap:14px;background:var(--chrome);border-bottom:1px solid #D7DAE0;padding:10px 14px}
+.dots{display:flex;gap:7px}
+.dots i{width:12px;height:12px;border-radius:50%;background:#F26B5B}
+.dots i:nth-child(2){background:#F5BE4F}.dots i:nth-child(3){background:#5CC75A}
+.url{flex:1;min-width:0;display:flex;align-items:center;gap:8px;background:var(--surface);border-radius:6px;padding:5px 12px;font-size:12.5px;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.url svg{width:12px;height:12px;flex:none}
+
+/* site */
+.shead{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 28px;border-bottom:1px solid var(--line)}
+.logo{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:20px;color:var(--brand)}
+.logo svg{width:22px;height:22px}
+.snav{display:flex;gap:20px;font-size:13px;color:var(--soft)}
+.event{background:var(--night);color:var(--night-ink);padding:22px 28px}
+.event h1{margin:0;font-family:var(--display);font-size:32px;color:#fff;line-height:1.1}
+.event p{margin:4px 0 0;font-size:14px}
+.steps{display:flex;gap:18px;font-size:12px;color:var(--faint);margin-top:12px;font-family:var(--mono);letter-spacing:.04em}
+.steps .on{color:#fff}
+.page{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:28px;padding:24px 28px 36px;align-items:start}
+@media (max-width:900px){.page{grid-template-columns:minmax(0,1fr)}.snav{display:none}}
+.col{display:grid;gap:18px;min-width:0}
+.col>*{min-width:0}
+h2{margin:0 0 4px;font-size:17px}
+.sub{color:var(--soft);font-size:13px;margin:0}
+
+/* seat map */
+.mapbox{border:1px solid var(--line);border-radius:10px;padding:16px;overflow-x:auto;background:#FBFAFD}
+.map{display:grid;gap:14px;justify-items:center;width:max-content;margin:0 auto}
+.stg{width:100%;text-align:center;background:var(--night);color:var(--night-ink);font-family:var(--mono);font-size:11px;letter-spacing:.3em;padding:6px;border-radius:4px 4px 30px 30px}
+.sect{display:grid;gap:4px;justify-items:center}
+.sect .sl{font-family:var(--mono);font-size:10.5px;color:var(--soft);letter-spacing:.08em}
+.rows{display:grid;gap:calc(var(--seat-size)*.35 + 1px)}
+.row{display:flex;align-items:center;gap:calc(var(--seat-size)*.35 + 1px)}
+.rl{width:calc(var(--seat-size) + 6px);font-size:max(8px,calc(var(--seat-size)*.55));color:var(--faint);text-align:center;font-family:var(--mono)}
+.aisle{width:calc(var(--seat-size)*1.2)}
+.seat{width:var(--seat-size);height:var(--seat-size);border-radius:calc(var(--seat-size)*.3);border:0;padding:0;background:var(--seat);cursor:pointer;font-size:calc(var(--seat-size)*.42);color:#fff;line-height:1;font-family:var(--mono)}
+.seat.ada{background:var(--ada)}
+.seat.taken{background:var(--taken);cursor:default}
+.seat.sel{background:var(--sel)}
+.seat:not(.taken):hover{filter:brightness(1.25)}
+
+/* legend / sections */
+.legend{display:grid;gap:8px}
+.lrow{display:grid;grid-template-columns:14px minmax(0,1fr) auto;gap:2px 10px;align-items:start;font-size:13px}
+.lrow i{width:12px;height:12px;border-radius:3px;margin-top:3px}
+.lrow .code{font-family:var(--mono);font-size:12px;font-weight:600}
+.lrow .plainw{display:none;grid-column:2/4;color:var(--soft);font-size:13px}
+.lrow .pr{font-weight:600;font-variant-numeric:tabular-nums}
+.plainlang .lrow .code{font-family:var(--body);font-size:14px}
+.plainlang .lrow .plainw{display:block}
+
+/* panel */
+.panel{border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:16px;background:var(--surface)}
+.timer{display:flex;align-items:center;gap:12px;border-radius:8px;padding:10px 12px;background:#F6F4FA}
+.timer .clock{font-family:var(--display);font-weight:700;font-size:24px;font-variant-numeric:tabular-nums;min-width:4.2ch}
+.timer .clock.low{color:var(--warn)}
+.timer .tl{font-size:12.5px;color:var(--soft);line-height:1.3}
+.timer .bar{flex:1;height:6px;border-radius:3px;background:#E3E0EA;position:relative;overflow:hidden;min-width:40px}
+.timer .bar span{position:absolute;inset:0 auto 0 0;background:var(--ink)}
+.timer .bar span.low{background:var(--warn)}
+.timer.relaxed{background:var(--brand-soft)}
+.picked{display:grid;gap:6px;font-size:13.5px}
+.picked .r{display:flex;justify-content:space-between;gap:10px}
+.picked .r span:last-child{font-variant-numeric:tabular-nums;font-weight:600}
+.picked .none{color:var(--faint)}
+.fine{font-size:10px;line-height:1.35;color:#B3AFBD;margin:0}
+.allin{display:none;gap:6px;font-size:15px}
+.allin .r{display:flex;justify-content:space-between;gap:10px}
+.allin .r span:last-child{font-variant-numeric:tabular-nums;font-weight:600}
+.allin .tot{border-top:1px solid var(--line);padding-top:8px;font-size:18px;font-weight:700}
+.allin p{margin:4px 0 0;font-size:14px;color:var(--ink)}
+.clear .fine{display:none}
+.clear .allin{display:grid}
+.subtotal{display:flex;justify-content:space-between;font-size:16px;font-weight:700}
+.clear~.subtotal{display:none}
+.cta{background:var(--brand);color:#fff;border:0;border-radius:8px;padding:13px;font-weight:700;font-size:15px;cursor:pointer;width:100%}
+.cta:disabled{background:#BDB8C8;cursor:not-allowed}
+.msg{font-size:13px;color:var(--warn);min-height:1.2em;margin:-8px 0 0}
+.expired{display:none;}
+.isexp>*{display:none!important}
+.isexp>.expired{display:grid!important;gap:10px;justify-items:start}
+.expired h3{margin:0;font-family:var(--display);font-size:22px}
+.expired p{margin:0;color:var(--soft)}
+
+/* X-ray */
+.plain{transition:opacity .2s}
+body.xray .plain{opacity:.3}
+.assume{position:relative}
+body.xray .assume{outline:3px dashed var(--xr);outline-offset:5px;border-radius:8px}
+body.xray .assume.done{outline:3px solid var(--ok)}
+body.xray .col,body.xray .panel{gap:74px}
+body.xray .page{padding-top:78px}
+.xtag{display:none;position:absolute;left:0;top:-10px;transform:translateY(-100%);z-index:30;width:max-content;max-width:min(320px,calc(100vw - 48px))}
+body.xray .xtag{display:block}
+.xbtn{display:grid;gap:2px;background:var(--xr);color:var(--xr-ink);border:0;border-radius:6px;padding:8px 12px;font-family:var(--body);font-size:13.5px;font-weight:600;line-height:1.3;cursor:pointer;text-align:left;box-shadow:0 3px 0 rgba(0,0,0,.28)}
+.xbtn b{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em}
+.xbtn small{font-family:var(--mono);font-size:11px;font-weight:500;opacity:.7}
+.done>.xtag .xbtn{background:var(--ok);color:var(--ok-ink)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+
+<div class="frame">
+  <div class="frame-in">
+    <div class="proto"><b>ADAPT</b> · prototype</div>
+    <div class="hint" id="hint"></div>
+    <button class="xtoggle" id="xray" aria-pressed="false">X-ray <kbd>X</kbd></button>
+    <button class="ghost" id="reset">Reset</button>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="win">
+    <div class="wbar plain"><div class="dots"><i></i><i></i><i></i></div><div class="url"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>larkspurhall.example/events/marlow-and-the-tide/seats</div></div>
+    <header class="shead plain">
+      <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9a2 2 0 002-2V5h14v2a2 2 0 000 4v2a2 2 0 000 4v2H5v-2a2 2 0 00-2-2z"/></svg>Larkspur Hall</div>
+      <nav class="snav"><span>Events</span><span>Plan your visit</span><span>Accessibility</span><span>Sign in</span></nav>
+    </header>
+    <section class="event plain">
+      <h1>Marlow &amp; the Tide</h1>
+      <p>Fri, Dec 4, 2026 · Doors 7:00 PM · Show 8:00 PM</p>
+      <div class="steps"><span class="on">1 SEATS</span><span>2 PAYMENT</span><span>3 DELIVERY</span></div>
+    </section>
+
+    <div class="page">
+      <div class="col">
+        <div class="plain"><h2>Pick 2 seats</h2><p class="sub">Click open seats on the map. Gray seats are sold.</p></div>
+        <div class="assume" data-key="seats"><div class="xtag"></div><div class="mapbox"><div class="map" id="map"></div></div></div>
+        <div class="legend assume" data-key="codes" id="legend"><div class="xtag"></div></div>
+      </div>
+
+      <aside class="panel" id="panel">
+        <div class="timer assume" data-key="timer" id="timer"><div class="xtag"></div><div class="tl">Seats held<br>for you</div><div class="clock" id="clock"></div><div class="bar"><span id="tbar"></span></div></div>
+        <div class="plain"><h2>Your seats</h2><div class="picked" id="picked"></div></div>
+        <div class="assume" data-key="fees" id="fees"><div class="xtag"></div>
+          <p class="fine">Prices shown excl. svc fee ($9.75/tkt) &amp; fac chg ($3.00/tkt), calc. at pmt. All sales final; no refunds/exch. Mobile entry only. Tkts non-transferable &lt;24 hrs pre-show. Subject to Terms of Purchase.</p>
+          <div class="allin" id="allin"></div>
+        </div>
+        <div class="subtotal plain" id="subtotal"></div>
+        <p class="msg" id="msg" aria-live="polite"></p>
+        <button class="cta" id="go">Continue to payment</button>
+        <div class="expired" id="exp"><h3>Your hold expired</h3><p>Your seats were released to other buyers.</p><button class="cta" id="again">Start over</button></div>
+      </aside>
+    </div>
+  </div>
+</div>
+
+<script>
+(()=>{
+const $=s=>document.querySelector(s);
+const INFO={
+  timer:{a:'you can decide in 3 minutes',d:'hold extended to 15 minutes'},
+  seats:{a:'you can click an 8px seat',d:'seats are large and numbered'},
+  codes:{a:'you know box office shorthand',d:'sections explained in plain words'},
+  fees:{a:'you read tiny gray text and do the fee math',d:'full price shown, fees included'}
+};
+const SECT={
+  orch:{code:'ORCH RES · ENT A',plain:'Orchestra, main floor. Reserved seat. Use Entrance A on Main St.',price:62,color:'var(--seat)'},
+  ada:{code:'ORCH ADA/CMP · LVL ENT',plain:'Wheelchair space on the main floor, with a companion seat beside it. Step-free entrance.',price:62,color:'var(--ada)'},
+  balc:{code:'BALC RES · ENT C · STAIRS',plain:'Balcony, upstairs. Reserved seat. Use Entrance C; reached by stairs only.',price:45,color:'var(--seat)'}
+};
+const FEE=9.75,FAC=3;
+let A={timer:false,seats:false,codes:false,fees:false},xray=false,picked=[],taken=new Set(),elapsed=0,expired=false;
+const limit=()=>A.timer?900:180;
+const fmt=s=>{s=Math.max(0,Math.ceil(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+const money=v=>'$'+v.toFixed(2);
+
+/* map */
+const ORCH='ABCDEFGHJK',BALC='LMNOP',PER=20;
+function rnd(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function seed(){taken=new Set();const r=rnd(7);for(const row of ORCH+BALC)for(let n=1;n<=PER;n++){if(r()<(row<'F'?0.75:0.55))taken.add(row+n)}['K1','K2','K19','K20'].forEach(id=>taken.delete(id));taken.add('K1')}
+const sectOf=id=>{const r=id[0],n=+id.slice(1);if(r==='K'&&(n<=2||n>=19))return'ada';return BALC.includes(r)?'balc':'orch'};
+function rowHTML(r){
+  let h=`<div class="row"><span class="rl">${r}</span>`;
+  for(let n=1;n<=PER;n++){
+    if(n===6||n===16)h+='<span class="aisle"></span>';
+    const id=r+n,s=sectOf(id),tk=taken.has(id),sl=picked.includes(id);
+    h+=`<button class="seat${s==='ada'?' ada':''}${tk?' taken':''}${sl?' sel':''}" data-seat="${id}" ${tk?'disabled':''} aria-label="Row ${r}, seat ${n}${tk?', sold':sl?', selected':''}">${A.seats?n:''}</button>`;
+  }
+  return h+`<span class="rl">${r}</span></div>`;
+}
+function renderMap(){
+  document.documentElement.style.setProperty('--seat-size',A.seats?'20px':'8px');
+  $('#map').innerHTML=`<div class="stg">STAGE</div>
+    <div class="sect"><span class="sl">ORCHESTRA</span><div class="rows">${[...ORCH].map(rowHTML).join('')}</div></div>
+    <div class="sect"><span class="sl">BALCONY</span><div class="rows">${[...BALC].map(rowHTML).join('')}</div></div>`;
+}
+function renderLegend(){
+  const l=$('#legend');l.classList.toggle('plainlang',A.codes);
+  l.querySelectorAll('.lrow').forEach(e=>e.remove());
+  l.insertAdjacentHTML('beforeend',Object.values(SECT).map(s=>`<div class="lrow"><i style="background:${s.color}"></i><span class="code">${A.codes?s.plain.split('.')[0]:s.code}</span><span class="pr">$${s.price}</span><span class="plainw">${A.codes?s.plain.split('.').slice(1).join('.').trim():''}</span></div>`).join(''));
+}
+function renderPanel(){
+  const p=$('#picked');
+  p.innerHTML=picked.length?picked.map(id=>{const s=SECT[sectOf(id)];return`<div class="r"><span>Row ${id[0]}, Seat ${id.slice(1)} · ${A.codes?s.plain.split(',')[0].split('.')[0]:s.code.split(' · ')[0]}</span><span>$${s.price}.00</span></div>`}).join(''):'<span class="none">No seats picked yet</span>';
+  const base=picked.reduce((a,id)=>a+SECT[sectOf(id)].price,0),n=picked.length;
+  $('#fees').classList.toggle('clear',A.fees);
+  $('#allin').innerHTML=`<div class="r"><span>Tickets (${n})</span><span>${money(base)}</span></div><div class="r"><span>Service fee (${money(FEE)} each)</span><span>${money(FEE*n)}</span></div><div class="r"><span>Facility fee (${money(FAC)} each)</span><span>${money(FAC*n)}</span></div><div class="r tot"><span>Total you pay</span><span>${money(base+(FEE+FAC)*n)}</span></div><p>No refunds. Tickets work only in the Larkspur Hall app.</p>`;
+  $('#subtotal').innerHTML=`<span>Subtotal</span><span>${money(base)}</span>`;
+  $('#go').disabled=n!==2||expired;
+}
+function renderTimer(){
+  const t=$('#timer');
+  if(expired){return}
+  const rem=limit()-elapsed,low=rem<=30;
+  $('#clock').textContent=fmt(rem);$('#clock').classList.toggle('low',low);
+  $('#tbar').style.width=Math.max(0,rem/limit()*100)+'%';$('#tbar').classList.toggle('low',low);
+  t.classList.toggle('relaxed',A.timer);
+}
+function renderTags(){
+  document.querySelectorAll('.assume').forEach(box=>{
+    const k=box.dataset.key,on=A[k];box.classList.toggle('done',on);
+    box.querySelector(':scope > .xtag').innerHTML=`<button class="xbtn" data-k="${k}" aria-pressed="${on}"><b>${on?'ADAPTED':'ASSUMES'}</b><span>${on?INFO[k].d:INFO[k].a}</span><small>${on?'Click to undo':'Click to adapt'}</small></button>`;
+  });
+  const n=Object.values(A).filter(Boolean).length;
+  $('#hint').textContent=xray
+    ?(n===4?'All 4 assumptions adapted. Turn X-ray off to see the page as it is now. The timer is paused.':`Click a yellow tag to adapt that part of the page. ${n} of 4 adapted. The timer is paused.`)
+    :'A concert ticket checkout. Try picking 2 seats, then turn on X-ray to see what the page assumes.';
+}
+function render(){renderMap();renderLegend();renderPanel();renderTimer();renderTags()}
+
+function expire(){
+  expired=true;picked=[];$('#panel').classList.add('isexp');renderMap();renderPanel();
+}
+let last=performance.now();
+setInterval(()=>{const now=performance.now(),dt=(now-last)/1000;last=now;if(!xray&&!expired){elapsed+=dt;if(elapsed>=limit())expire();else renderTimer()}},250);
+
+document.addEventListener('click',e=>{
+  const g=e.target;
+  const k=g.closest('[data-k]');if(k){A[k.dataset.k]=!A[k.dataset.k];render();return}
+  const s=g.closest('[data-seat]');if(s&&!s.disabled&&!expired){const id=s.dataset.seat;picked=picked.includes(id)?picked.filter(x=>x!==id):[...picked,id].slice(-2);$('#msg').textContent='';renderMap();renderPanel();return}
+  if(g.closest('#go')){$('#msg').style.color='var(--brand)';$('#msg').textContent='Payment is not part of this demo.';return}
+  if(g.closest('#again')){restart();return}
+});
+function setXray(on){xray=on;document.body.classList.toggle('xray',on);$('#xray').setAttribute('aria-pressed',on);renderTags()}
+$('#xray').addEventListener('click',()=>setXray(!xray));
+document.addEventListener('keydown',e=>{if((e.key==='x'||e.key==='X')&&!e.metaKey&&!e.ctrlKey&&!e.altKey)setXray(!xray)});
+function restart(){picked=[];elapsed=0;expired=false;$('#panel').classList.remove('isexp');$('#msg').textContent='';seed();render()}
+$('#reset').addEventListener('click',()=>{A={timer:false,seats:false,codes:false,fees:false};setXray(false);restart()});
+seed();render();
+})();
+</script>
+
+</body>
+</html>
